@@ -1,16 +1,18 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const whichDay = require("./helper/helper");
 
 const app = express();
 
-app.get("/", (req, res) => {
-  var today = new Date();
+app.set("view engine", "ejs");
 
-  if (today.getDay() === 6 || today.getDay() === 0) {
-    res.send("work harder");
-  } else {
-    res.send("work");
-  }
+app.get("/", (req, res) => {
+  const today = new Date();
+  const currentDay = today.getDay();
+
+  const findDay = whichDay(currentDay);
+
+  res.render("list", { kindOfDay: findDay });
 });
 
 const Port = process.env.PORT || 3000;
