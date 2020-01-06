@@ -1,31 +1,23 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const day = require("./day");
 
-let items = [];
-let workitems = [];
+const items = [];
+const workitems = [];
 
 const app = express();
 
 app.use(express.static("public"));
 
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(
+  bodyParser.urlencoded({
+    extended: true
+  })
+);
 
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
-  const today = new Date();
-
-  const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  };
-
-  const day = today.toLocaleDateString("en-us", options);
-
   res.render("list", {
     listTitle: day,
     newTodos: items
@@ -55,7 +47,6 @@ app.get("/work", (req, res) => {
     newTodos: workitems
   });
 });
-
 
 const Port = process.env.PORT || 3000;
 app.listen(Port, () => {
