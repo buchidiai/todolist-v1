@@ -1,7 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const day = require("./day");
 
 const app = express();
 
@@ -25,8 +24,13 @@ const itemSchema = new mongoose.Schema({
   name: String
 });
 
+const listSchema = new mongoose.Schema({
+  name: String,
+  items: [itemSchema]
+});
+
 const Item = mongoose.model("Item", itemSchema);
-const Work = mongoose.model("Work", itemSchema);
+const List = mongoose.model("List", listSchema);
 
 const saveDefault = (message, model) => {
   return new model({
@@ -40,13 +44,6 @@ const defaultItems = [
   saveDefault("Then go crazy", Item)
 ];
 
-const defaultWorkItems = [
-  saveDefault("This is a Work List", Work),
-  saveDefault("Type an item", Work),
-  saveDefault("Hit + to add an item", Work),
-  saveDefault("Then go crazy", Work)
-];
-
 app.get("/", (req, res) => {
   Item.find({}).then(response => {
     if (response.length === 0) {
@@ -58,8 +55,44 @@ app.get("/", (req, res) => {
         .catch(() => console.log("error saving default"));
     } else {
       res.render("list", {
-        listTitle: day,
+        listTitle: "Today",
         newTodos: response
+      });
+    }
+  });
+});
+
+app.get("/:list", (req, res) => {
+  const listName = req.params.list;
+
+  List.find({ name: listName }).then(result => {
+    if (!result) {
+      //create new list
+      console.log(result, "result not");
+
+      const list = new List({
+        name: listName,
+        items: defaultItems
+      });
+      list
+        .save()
+        .then(r => {
+          console.log("saved " + listName);
+
+          console.log("response from new list " + r);
+
+          res.redirect("/" + listName);
+        })
+        .catch(err => {
+          console.log("erros");
+        });
+    } else {
+      //show existing list
+      console.log(result, "true");
+
+      res.render("list", {
+        listTitle: listName,
+        newTodos: result
       });
     }
   });
@@ -111,24 +144,6 @@ app.post("/delete", (req, res) => {
     .catch(err => {
       console.log(err);
     });
-});
-
-app.get("/work", (req, res) => {
-  Work.find({}).then(response => {
-    if (response.length === 0) {
-      Work.insertMany(defaultWorkItems)
-        .then(() => {
-          console.log(`saved default to db`);
-          res.redirect("/work");
-        })
-        .catch(() => console.log("error saving default"));
-    } else {
-      res.render("list", {
-        listTitle: "Work List for " + day,
-        newTodos: response
-      });
-    }
-  });
 });
 
 const Port = process.env.PORT || 3000;
