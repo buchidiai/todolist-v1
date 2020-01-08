@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
 
@@ -17,7 +18,7 @@ app.set("view engine", "ejs");
 mongoose.connect("mongodb://localhost:27017/todolistDB", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  useFindAndModify: true
+  useFindAndModify: false
 });
 
 const itemSchema = new mongoose.Schema({
@@ -52,12 +53,12 @@ app.get("/", (req, res) => {
       //then redirect
       Item.insertMany(defaultItems)
         .then(() => {
-          console.log(`saved default to db`);
+          console.log(`saved default items to db`);
           res.redirect("/");
         })
         .catch(() => console.log("error saving default"));
     } else {
-      //if rayy is not 0
+      //if rayy is not === 0
       //render items
       res.render("list", {
         listTitle: "Today",
@@ -68,8 +69,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/:list", (req, res) => {
-  const listName = req.params.list;
-  //find list based on params entered
+  const listName = _.capitalize(req.params.list);
+  //find list based on url params entered
   List.findOne({ name: listName }).then(result => {
     if (result === null) {
       //create new list
@@ -86,11 +87,11 @@ app.get("/:list", (req, res) => {
           res.redirect("/" + listName);
         })
         .catch(err => {
-          console.log("erros");
+          console.log("errors");
         });
     } else {
       //show existing list
-      //show array items
+      //render array items in list.ejs
 
       res.render("list", {
         listTitle: result.name,
@@ -105,14 +106,12 @@ app.post("/", (req, res) => {
   if (!req.body || !req.body.newTodo || !req.body.list)
     return res.json("Can not be empty");
 
-  const item = req.body.newTodo;
-  const listName = req.body.list;
+  const item = _.capitalize(req.body.newTodo);
+  const listName = _.capitalize(req.body.list);
   //create new item object
   const todo = new Item({
     name: item
   });
-
-  console.log(listName, "listName");
 
   if (listName === "Today") {
     //save item from main page to db
@@ -126,6 +125,7 @@ app.post("/", (req, res) => {
 
     res.redirect("/");
   } else {
+    //save item from custom url param
     //when item is added from custom list w/ param handle
     //find object from db
     //push new item into array of items from listSchema
@@ -133,20 +133,9 @@ app.post("/", (req, res) => {
 
     List.findOne({ name: listName })
       .then(result => {
-        console.log(result, "result from custom param");
-
-        console.log("push");
         result.items.push(todo);
         result.save();
         res.redirect("/" + listName);
-
-        // if (!result) {
-        //   //create new list
-        //   console.log("create");
-        // } else {
-        //   //push to list
-
-        // }
       })
       .catch(err => {
         console.log("error" + err);
@@ -156,19 +145,34 @@ app.post("/", (req, res) => {
 
 app.post("/delete", (req, res) => {
   const checkedItem = req.body.checkbox;
+  const listName = req.body.listName;
 
   //remove item from db via id
   //redirect
 
-  Item.findByIdAndRemove(checkedItem)
-    .then(result => {
-      console.log("item was deleted");
+  if (listName === "Today") {
+    Item.findByIdAndRemove(checkedItem)
+      .then(result => {
+        console.log("item was deleted");
 
-      res.redirect("/");
-    })
-    .catch(err => {
-      console.log(err);
-    });
+        res.redirect("/");
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  } else {
+    List.findOneAndUpdate(
+      { name: listName },
+      { $pull: { items: { _id: checkedItem } } }
+    )
+      .then(result => {
+        console.log(result, "find n update");
+        if (result) {
+          res.redirect("/" + listName);
+        }
+      })
+      .catch(err => {});
+  }
 });
 
 const Port = process.env.PORT || 3000;
