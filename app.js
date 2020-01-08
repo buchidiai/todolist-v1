@@ -138,7 +138,10 @@ app.post("/", (req, res) => {
       .then(result => {
         result.items.push(todo);
         result.save();
+        console.log("saved " + todo + " from custom list ");
+
         res.redirect("/" + listName);
+        console.log("redirected / refreshed ");
       })
       .catch(err => {
         console.log("error" + err);
@@ -169,7 +172,6 @@ app.post("/delete", (req, res) => {
       { $pull: { items: { _id: checkedItem } } }
     )
       .then(result => {
-        console.log(result, "find n update");
         if (result) {
           res.redirect("/" + listName);
         }
