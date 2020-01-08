@@ -10,19 +10,23 @@ app.use(express.static("public"));
 
 app.use(
   bodyParser.urlencoded({
-    extended: true,
-    useUnifiedTopology: true
+    extended: true
   })
 );
+
 app.set("view engine", "ejs");
 
 console.log(mongoURI, "mongoURI");
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false
-});
+mongoose.set("useFindAndModify", false);
+mongoose.set("useNewUrlParser", true);
+mongoose.set("useUnifiedTopology", true);
+mongoose
+  .connect(mongoURI)
+  .then(() => console.log(`Database has connected successfully`))
+  .catch(error => {
+    console.log(error);
+  });
 
 const itemSchema = new mongoose.Schema({
   name: String
@@ -49,13 +53,20 @@ const defaultItems = [
 ];
 
 app.get("/", (req, res) => {
+  console.log("i got here 1");
+
   //get all items from db
   Item.find({}).then(response => {
+    console.log(response, "response");
+    console.log(defaultItems, "defaultItems");
+
     if (response.length === 0) {
+      console.log("i got here 2");
       //if array length is 0, insert default into db
       //then redirect
       Item.insertMany(defaultItems)
         .then(() => {
+          console.log("i got here 3");
           console.log(`saved default items to db`);
           res.redirect("/");
         })
@@ -63,6 +74,7 @@ app.get("/", (req, res) => {
     } else {
       //if rayy is not === 0
       //render items
+      console.log("i got here 4");
       res.render("list", {
         listTitle: "Today",
         newTodos: response
