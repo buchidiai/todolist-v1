@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const _ = require("lodash");
+const { mongoURI } = require("./config/keys");
 
 const app = express();
 
@@ -15,7 +16,9 @@ app.use(
 );
 app.set("view engine", "ejs");
 
-mongoose.connect("mongodb://localhost:27017/todolistDB", {
+console.log(mongoURI, "mongoURI");
+
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false
