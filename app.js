@@ -18,14 +18,17 @@ app.set("view engine", "ejs");
 
 console.log(mongoURI, "mongoURI");
 
-mongoose.set("useFindAndModify", false);
-mongoose.set("useNewUrlParser", true);
-mongoose.set("useUnifiedTopology", true);
+mongoose.Promise = global.Promise;
+
 mongoose
-  .connect(mongoURI)
+  .connect(mongoURI.toString(), {
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useNewUrlParser: true
+  })
   .then(() => console.log(`Database has connected successfully`))
   .catch(error => {
-    console.log(error);
+    console.log("error connectiong to db", error);
   });
 
 const itemSchema = new mongoose.Schema({
